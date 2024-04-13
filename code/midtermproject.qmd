@@ -7,7 +7,7 @@ format:
     embed-resources: true
     toc: true
     number-sections: true
-    theme: cerulean
+    theme: sandstone
 bibliography: references.bib
 ---
 
@@ -35,15 +35,15 @@ To get you setup, you will need to:
 
 The convergence of remote sensing and computer vision promises to revolutionize plant research and crop monitoring by providing more efficient and insightful data collection methods within controlled environments like greenhouses. The true potential lies in the transformation of sensor-derived numerical representation of objects shapes or pixel intensities into meaningful parameters with biological relevance [@fahlgren2015].
 
-Destructive approaches limit a continuous evaluation of environmental effects on a highly dynamic plant response such as crop yield [@mochida2019]. Image-based solution add efficiency to the data collection process
+Indoor horticulture benefits from a partial or complete environmental control that provides a consistent productivity. Destructive approaches limit a continuous evaluation of environmental effects on a highly dynamic plant response such as crop yield [@mochida2019]. Image-based solution add efficiency to the data collection process. RGB sensors capturing color information from the red, green and blue bands is a highly versatile, ubiquitous and accessible tool to
 
-Lettuce canopy architecture could be described using two-dimensional (2D) top view captures. Besides canopy projected area, additional shape properties provide a more comprehensive description of plant structure [@devylder2012]
+Lettuce canopy architecture could be described using two-dimensional (2D) top view RGB captures. Besides canopy projected area, additional shape properties provide a more comprehensive description of plant structure [@devylder2012]. In this study, an image analysis workflow was implemented to obtain geometrical features from multiple lettuce canopies simultaneously growing hydroponically. The same image-derived features were implemented as potential predictors for simple linear regress
 
 Paragraph 4
 
 # Hypothesis and objectives
 
-HYPOTHESIS: Lettuce fresh weight estimation per plant is accurately estimated using potential predictors coming from an RGB image analysis and machine learning models.
+HYPOTHESIS: Lettuce fresh weight per plant is accurately estimated using canopy geometric features extracted using an RGB image analysis and machine learning models.
 
 -   Extract multiple geometric features for each plant canopy as potential predictors.
 
@@ -62,6 +62,374 @@ Clearly describe your study design here, including treatment design (which facto
 Describe here your statistical analysis, including what type of ANOVA model you ran (based on the design above), what was your response variable, what were your explanatory variables and how were the explanatory variables treated (random or fixed). Provide your alpha level. Explain which function from which package you used to analyze this data. Explain how you checked linear model assumptions and whether or not they were met. Overall, make sure you explain in sufficient detail that, if given your data, a knowledgeable person would be able to reproduce your analysis exactly.
 
 # Results
+
+## Exploratory Data Analysis (EDA)
+
+```{r setup}
+#| message: false
+#| warning: false
+
+# Loading packages
+library(tidyverse) # for data wrangling and plotting
+library(janitor) # clean column names
+library(knitr) # for figure displaying
+library(car) # for Anova function
+library(lme4)
+library(broom) # for model residuals extraction
+library(emmeans) # for model mean extraction
+library(multcomp) # for pairwise comparison letter display
+library(nlme) # for repeated measure correlation structures 
+library(ggridges)
+library(ggcorrplot)
+library(nlraa)
+```
+
+Loading data tables including remote sensed data, treatment factor columns, response variables (leaf fresh weight, leaf dry weight and leaf area), harvest dates.
+
+```{r}
+#| message: false
+#| warning: false
+raw_data <- read_csv("../files/20-02_feat-matrix.csv")
+wr_data <- raw_data %>%
+  clean_names() %>% 
+  dplyr::select(-c("tipburn",'percent_tipburn',
+                   "cum_dli","cf")) %>%
+  na.omit()
+```
+
+Transform treatments into factors and create a new column where each treatment is specified. Set date as date format to calculate DAT.
+
+```{r}
+tr_date  <- mdy('10/18/2023')
+
+wr_data <-wr_data %>%
+  mutate(date = mdy(date),
+         tray_id = factor(tray_id),
+         light = factor(light),
+         dat = as.factor(date - tr_date) 
+         ) %>%
+  mutate(trtname = paste0(cultivar, '+',light)) %>%
+  dplyr::select(-c(melatonin))
+```
+
+## Boxplots: Response Variables distribution.
+
+```{r}
+#| fig-width: 12
+#| fig-height: 8
+wr_data %>%
+  ggplot(aes(x = cultivar,
+           y = lfw_g,
+           fill = cultivar
+           )
+       ) +
+  geom_boxplot(width = 0.4)+
+  geom_jitter(alpha = 0.5,
+              width = 0.3) +
+  theme_bw()+
+  facet_grid(dat~light,
+             scales = 'free') +
+  theme(plot.title = element_text(size=16,hjust = 0.5, face="bold"),
+                   axis.text = element_text(size = 14,color="black"),
+                   axis.title = element_text(size = 14, face="bold"),
+                   legend.position = "top",
+        legend.text = element_text(size = 14),  # Adjust legend text size
+        legend.title = element_text(size = 14, face = 'bold'),
+        panel.spacing = unit(.6, "lines"),
+        panel.border = element_rect(color = "black", fill = NA, size = 1),
+        strip.background = element_rect(fill = "gray", color = "black", size = 1),
+    strip.text = element_text(size = 14, face = "bold", color = "white"))+
+  labs(title=NULL,
+       subtitle = NULL,
+       caption=NULL,
+       x=NULL,
+       y="Leaf Fresh Weight (g)")
+```
+
+## Response variables and predictors
+
+To facilitate the analysis down this workflow, the original data set was divided into multiple data frames that contains all imaging features that will be used as potential predictors. Additionally, a data frame was created with all the response variables and predictors combined to implement an iterative step.
+
+```{r}
+predictors <- wr_data %>% dplyr::select(11:20) 
+
+response <- wr_data %>% dplyr::select(c('lfw_g'))
+
+matrix <- predictors %>%
+  mutate(lfw_g = response$lfw_g) 
+
+matrix_resp <- predictors %>%
+  mutate(lfw_g = wr_data$lfw_g,
+         ldw_g = wr_data$ldw_g,
+         la_mm2 = wr_data$la_mm2) 
+ 
+```
+
+## Baseline model: Best Predictor
+
+To determine what is the best image parameter that best explains the variability of the response, the coefficient of determination - R^2^ was extracted from all possible linear regressions between 3 responses & 10 potential predictors. The image parameter showing the greatest value was used as the predictor for the baseline simple linear regression.
+
+```{r}
+r2_mods <- matrix_resp %>%
+  # Pivotting longer for the response variables
+  pivot_longer(cols = lfw_g:la_mm2,
+               names_to = "resp_var",
+               values_to = "resp_val"
+               ) %>%
+  # Pivotting longer for the explanatory variables  
+  pivot_longer(cols = perimeter:inc_light,
+               names_to = "exp_var",
+               values_to = "exp_val"
+               ) %>%
+  # Creating groups of resp_var and exp_var
+  group_by(resp_var,exp_var) %>%
+  nest() %>%
+  # Applying linear model to each element
+  mutate(lm = map(data,
+                  ~lm(resp_val ~ exp_val,
+                      data = .x
+                      )
+                  )) %>%
+  # Extracting R2 for each element  
+  mutate(r2 = map(lm,
+                  ~ summary(.x)$r.squared
+                  )
+         )
+
+r2_mods
+```
+
+Only the features with the top 3 greatest R^2^ values are shown.
+
+```{r}
+top_r2 <- r2_mods %>%
+  unnest(r2) %>%
+  group_by(resp_var)  %>%
+  arrange(desc(r2),resp_var) %>%
+  slice(1:3) %>%
+  mutate(r2 = round(r2,3))
+
+
+```
+
+A data frame with the top 3 features per variable created above was used to generate scatterplots showing the potential predictor on the x-axis and the biomass response on the y-axis (fresh weight, dry weight or leaf area).
+
+```{r}
+#| fig-width: 15
+#| fig-height: 10
+
+lm_plots <- top_r2 %>%
+  mutate(splot = map2(data,r2,
+                      ~ ggplot(data = .x,
+                               aes(x = exp_val,
+                                   y = resp_val)
+                               ) +
+                        geom_point()+
+                        geom_smooth(method = 'lm') +
+                        labs(title = paste("R\u00B2",.y))
+                      
+                      )
+         ) %>%
+  mutate(splot_better = pmap(
+    list(.df = data, 
+         .r2 = r2,
+         .rv = resp_var,
+         .ev = exp_var
+         ),
+    function(.df,.r2,.rv,.ev) 
+      ggplot(data = .df,
+                               aes(x = exp_val,
+                                   y = resp_val)
+                               ) +
+                        geom_point(color = "black",
+                                   shape = 21,
+                                   size = 1.5, 
+                                   stroke = 0.7,
+                                   fill = 'red3') +
+                        geom_smooth(method = 'lm', 
+                                    color = "black") +
+                        theme_bw() +
+                        labs(title = paste(.ev,"\nR\u00B2:", .r2),
+                             
+                             x = .ev, 
+                             y = .rv
+                             )))
+
+library(gridExtra)
+
+linear_plots <- marrangeGrob(lm_plots$splot_better,
+                         nrow = 3,
+                         ncol = 3)
+
+linear_plots
+```
+
+The following table summarizes the coefficient of determination (R^2^) values chosen for each response variable.
+
+|     |        Leaf fresh weight         |          Leaf dry weight          |         Leaf area         |
+|------------------|:----------------:|:----------------:|:----------------:|
+| 1   | **incident light (R^2^= 0.784)** |      diameter (R^2^= 0.806 )      |  diameter (R^2^= 0.847 )  |
+| 2   |      diameter (R^2^= 0.775)      | **incident light (R^2^= 0.801 )** |  area_cm2 (R^2^= 0.828 )  |
+| 3   |      area_cm2 (R^2^= 0.770)      |      area_cm2 (R^2^= 0.793 )      | axis_minor (R^2^= 0.782 ) |
+
+: Top 3 predictors with the largest coefficient of determination values for the 3 responses variables
+
+## Assumptions for the best predictor
+
+Incident light showed the greatest R^2^ to predict fresh biomass. This variable combines canopy area information with the amount of light received until a specific time point measured using a light sensor (cumulative DLI).
+
+```{r}
+options(contrasts = c("contr.sum", "contr.poly"))
+
+# Model fitting: Because SR is numerical, will give us a slope. 
+lfw_lin<- lm(lfw_g ~ inc_light,
+                 data = matrix_resp)
+
+summary(lfw_lin)
+
+lfw_lin_aug <- augment(lfw_lin) %>%
+  mutate(.stdresid = rstudent(lfw_lin))
+
+ggplot(lfw_lin_aug, 
+       aes(x = .fitted, 
+           y = .stdresid))+
+  geom_hline(yintercept = 0, color = "red")+
+  geom_hline(yintercept = c(-3,3), color = "red")+
+  geom_point(size = 3, alpha = .6)+
+  geom_smooth()
+
+```
+
+## Linear or non - linear?
+
+Destructive measurements and remote sensed data were captured at 3 time points along the crop cycle. As the objective is to fit a single model that predicts biomass on any given day, the right linear or non-linear fit between the best predictor must be found.
+
+```{r}
+options(contrasts = c("contr.sum", "contr.poly"))
+
+# Model fitting: Because SR is numerical, will give us a slope. 
+lfw_quad<- lm(lfw_g ~ inc_light + I(inc_light^2) ,
+                 data = matrix_resp)
+summary(lfw_quad)
+
+lfw_quad_aug <- augment(lfw_quad) %>%
+  mutate(.stdresid = rstudent(lfw_quad))
+
+ggplot(lfw_quad_aug, 
+       aes(x = .fitted, 
+           y = .stdresid))+
+  geom_hline(yintercept = 0, color = "red")+
+  geom_hline(yintercept = c(-3,3), color = "red")+
+  geom_point(size = 3, alpha = .6)+
+  geom_smooth()
+
+ggplot(data = matrix_resp, aes(x = inc_light, y = lfw_g)) +
+geom_point() +
+geom_line(aes(y = fitted(lfw_quad)))
+```
+
+```{r}
+lfw_log = nls(lfw_g ~ SSlogis(inc_light, a, b,c), 
+            data = matrix_resp)
+
+summary(lfw_log)
+
+lfw_log_aug <- augment(lfw_log) %>%
+  mutate(.stdresid = resid(lfw_log, 
+                           type = "pearson", 
+                           scaled = T))
+
+ggplot(lfw_log_aug, 
+       aes(x = .fitted, 
+           y = .stdresid))+
+  geom_hline(yintercept = 0, color = "red")+
+  geom_hline(yintercept = c(-3,3), color = "red")+
+  geom_point(size = 3, alpha = .7)+
+  geom_smooth()
+
+ggplot(data = matrix_resp, aes(x = inc_light, y = lfw_g)) +
+geom_point() +
+geom_line(aes(y = fitted(lfw_log)))
+
+```
+
+
+
+
+Based on each model assumptions, a baseline model that fits
+
+## Correlations among predictors
+
+To assess a potential risk of multicollinearity among predictors, a correlation matrix based on Pearson's Correlation Coefficient (r) is plotted to check how linearly correlated the potential predictors are.
+
+```{r}
+#| fig-width: 12
+#| fig-height: 8
+corr_percent <- round(cor(predictors),2)
+p.mat <- cor_pmat(predictors)
+
+ggcorrplot(corr_percent, hc.order = TRUE, 
+           ggtheme = theme_classic(),
+           legend.title = "Pearson's (r) " ,
+           outline.color = "black",
+           type = "full",
+           lab = TRUE,
+           lab_size = 5,
+           tl.cex = 14,
+           tl.col = "black") +
+    theme(legend.title = element_text(size=14, face = "bold"),
+          legend.text = element_text(size=12))
+```
+
+The level of multicollinearity among 7 out of 10 predictors is high. To address this problem, a multiple linear regression fitted based on the variables that show the lowest variance inflation factor (VIF) when using simultaneously in a model will be used. Additionally, LASSO regression will be implemented as an alternative option, as this model penalizes predictors that do not contribute significantly.
+
+## Modelling
+
+### Multiple Linear Regression
+
+Incident light was calculated based on canopy area, therefore adding both features together causes. Based on the R^2^ values and the biological significance of incident light, we will use incident light instead of area_cm2 and diameter, that essentially are giving us the same information.
+
+```{r}
+full_mlr<- lm(lfw_g ~ ., data  = matrix)
+summary(full_mlr)
+
+    
+full_mlr %>%
+  vif()
+```
+
+A full model alternative is summarized in the chunk below where many of the variable coefficients are not significant. Additionally, the VIFs for all the variables included are displayed to show how correlated most of the geometric variables are. Using the correlation matrix plotted in subsection 6.7 and based on the knowledge of what the morphometric variables described about the canopy shape, a reduced group of variables was selected.
+
+```{r}
+vif_mlr<- lm(lfw_g ~ inc_light + perimeter + compactness  , data  = matrix) 
+
+summary(vif_mlr)
+
+lfw_vif_aug <- augment(vif_mlr) %>%
+  mutate(.stdresid = resid(vif_mlr, 
+                           type = "pearson", 
+                           scaled = T))
+
+ggplot(lfw_vif_aug, 
+       aes(x = .fitted, 
+           y = .std.resid))+
+  geom_hline(yintercept = 0, color = "red")+
+  geom_hline(yintercept = c(-3,3), color = "red")+
+  geom_point(size = 3, alpha = .7)+
+  geom_smooth()
+
+vif_mlr %>%
+  vif()
+```
+
+By keeping the least correlated predictors and selecting the variables that portrait heterogeneous information of that canopy shape, we obtained a MLR model with variables with highly significant coefficients.Additionally, the VIFs for the 3 variables selected are below 5. 
+
+## Predictions: Training and Testing. 
+Until this point we found that to predict LFW,  a quadratic model of incident light seems to be the best baseline model to be used for prediction as shown by it's high capacity for capturing variability in the response, a better description of the residuals variability as shown by the assumptions plot. 
+
+```{r}
+
+```
 
 Here is where the coding is going to happen, and it will be completely up to you. Include under this section as many sub-sections (using ##) and as many chunks needed to create the analytical workflow for your analysis, starting at loading packages and data, wrangling, EDA, modeling, assumptions checking, ANOVA table, means, pairwise comparisons, and final publication-quality plot.
 
