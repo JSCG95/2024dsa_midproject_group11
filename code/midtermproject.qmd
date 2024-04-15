@@ -7,7 +7,7 @@ format:
     embed-resources: true
     toc: true
     number-sections: true
-    theme: sandstone
+    theme: journal
 bibliography: references.bib
 ---
 
@@ -82,6 +82,7 @@ library(nlme) # for repeated measure correlation structures
 library(ggridges)
 library(ggcorrplot)
 library(nlraa)
+library(caret)
 ```
 
 Loading data tables including remote sensed data, treatment factor columns, response variables (leaf fresh weight, leaf dry weight and leaf area), harvest dates.
@@ -106,9 +107,11 @@ wr_data <-wr_data %>%
   mutate(date = mdy(date),
          tray_id = factor(tray_id),
          light = factor(light),
-         dat = as.factor(date - tr_date) 
+         dat = as.integer(date - tr_date),
+         fdat = as.factor(dat),
+         fcultivar = factor(cultivar)
          ) %>%
-  mutate(trtname = paste0(cultivar, '+',light)) %>%
+  mutate(trtname = as.factor(paste0(cultivar, '+',light))) %>%
   dplyr::select(-c(melatonin))
 ```
 
@@ -145,6 +148,53 @@ wr_data %>%
        x=NULL,
        y="Leaf Fresh Weight (g)")
 ```
+
+Means per tray as my replicate for the ANOVA analysis. 
+
+```{r}
+mean_lfw <- wr_data %>%
+  group_by(fcultivar,dat,fdat,light,trtname,tray_id) %>%
+  summarise(n = n(),
+            mean = mean(lfw_g))
+```
+
+
+## 2-WAY ANOVA 
+```{r}
+mod_default <- lme(
+  mean ~ light*fcultivar*fdat,
+  random = ~ 1|light/fcultivar,
+  data = mean_lfw)
+
+
+mod_arma2 <- lme(
+  mean ~ light*fcultivar*fdat,
+  random = ~ 1|light/fcultivar,
+  correlation = corARMA(p = 1, q = 1),
+  data = mean_lfw)
+
+
+mod_AR1 <- lme(
+  mean ~ light*fcultivar*fdat,
+  random = ~ 1|tray_id,
+  correlation = corCAR1(form = ~dat),
+  data = mean_lfw)
+
+
+```
+
+```{r}
+Anova(mod1_df, type = 3)
+```
+
+```{r}
+ACF(mod1_df, resType = "n") %>%
+  plot(alpha = 0.01)
+```
+```{r}
+anova(mod_default,mod_arma2, mod_AR1)
+```
+
 
 ## Response variables and predictors
 
@@ -401,7 +451,7 @@ full_mlr %>%
 A full model alternative is summarized in the chunk below where many of the variable coefficients are not significant. Additionally, the VIFs for all the variables included are displayed to show how correlated most of the geometric variables are. Using the correlation matrix plotted in subsection 6.7 and based on the knowledge of what the morphometric variables described about the canopy shape, a reduced group of variables was selected.
 
 ```{r}
-vif_mlr<- lm(lfw_g ~ inc_light + perimeter + compactness  , data  = matrix) 
+vif_mlr<- lm(lfw_g ~ inc_light + convex_hull + compactness  , data  = matrix) 
 
 summary(vif_mlr)
 
@@ -425,11 +475,165 @@ vif_mlr %>%
 By keeping the least correlated predictors and selecting the variables that portrait heterogeneous information of that canopy shape, we obtained a MLR model with variables with highly significant coefficients.Additionally, the VIFs for the 3 variables selected are below 5. 
 
 ## Predictions: Training and Testing. 
+### Data partition: Test-train split available
 Until this point we found that to predict LFW,  a quadratic model of incident light seems to be the best baseline model to be used for prediction as shown by it's high capacity for capturing variability in the response, a better description of the residuals variability as shown by the assumptions plot. 
 
+Here, I'm dropping the variables area_cm2 and diameter as I know ahead that incident light is capturing the same information being captured by these 2. 
+As we will start using a machine learning approach to find the model that yields the most accurate prediction, our full dataset will be split in a training and a testing data set. Plant observation on the training set will be used to find the values of the hypertuning parameters for the models that require a hyperparameter specification (in our case: LASSO and random forest).  
+
 ```{r}
+matrix_alt <- matrix %>%
+  dplyr::select(-c(diameter, area_cm2))
+
+# Partition data and create index matrix of selected values
+index <- createDataPartition(matrix_alt$lfw_g, 
+                             p=.8, 
+                             list=FALSE, 
+                             times=1)
+
+set.seed(20)
+# Create test and train data frames
+train_df <- matrix_alt[index,]
+test_df <- matrix_alt[-index,]
+```
+### Model 3: LASSO Regression 
+Before training we need a resampling scheme. Here we are using a 10-fold cross validation 
+```{r}
+# Specify 10-fold cross-validation as training method
+cv_10 <- trainControl(method="cv", 
+                          number=10,
+                          savePredictions="all")
+```
+
+LASSO implements a penalty (lambda value) that is a threhold to reject variables with insignificant contribution to the model predictions. The following vector creates 500 different possible values for lambda. We want to find the valye of lambda that gives the minimum MSE.
+```{r}
+lambda_vector <- 10^seq(2, -5, length=500)
+```
+
+
+```{r}
+# Set seed for reproducible random selection and assignment operations
+set.seed(123) 
+
+# Specify lasso regression model to be estimated using training data
+# and k-fold cross-validation process
+lfw_lasso <- train(lfw_g ~., 
+                data=train_df,
+                preProcess=c("center","scale"),
+                method="glmnet", 
+                tuneGrid=expand.grid(alpha=1, lambda=lambda_vector),
+                trControl=cv_10,
+                na.action=na.omit)
+```
+
+
+Showing the average performance for 2 performance metrics (R^2^ and RMSE). 
+```{r}
+lamb_best<- lfw_lasso$bestTune$lambda
+
+
+perf_lambda <- data.frame(lfw_lasso$results$Rsquared, 
+                   lfw_lasso$results$lambda,
+                   lfw_lasso$results$RMSE) %>%
+  rename(R2 = lfw_lasso.results.Rsquared,
+         lambda = lfw_lasso.results.lambda,
+         RMSE = lfw_lasso.results.RMSE) %>%
+  filter(lambda == lamb_best)
+
 
 ```
+
+```{r}
+coef(lfw_lasso$finalModel, lfw_lasso$bestTune$lambda)
+```
+```{r}
+varImp(lfw_lasso)
+```
+
+### Random Forest
+```{r}
+rf_grid <- expand.grid(.mtry = c(2, 5,10))  # Number of variables to sample as candidates at each split
+
+set.seed(123) 
+# Fit the random forest model
+lfw_rf <- train(lfw_g ~ .,
+                data = train_df,
+                method = "rf",
+                trControl = cv_10,
+                tuneGrid = rf_grid,
+                na.action = na.omit)
+```
+```{r}
+perf_rf <- data.frame(lfw_rf$results$Rsquared, 
+                   lfw_rf$results$mtry,
+                   lfw_rf$results$RMSE) %>%
+  rename(R2 = lfw_rf.results.Rsquared,
+         mtry = lfw_rf.results.mtry,
+         RMSE = lfw_rf.results.RMSE) 
+
+perf_rf
+```
+## Predictions performance using test set
+Until this point we generated 3 predicting models: Baseline with incident_light quadratic, lasso regression and random forest regression. To run prediction with each model simultaneously I will iterate through the model's names. 
+
+```{r}
+# Load the necessary library
+library(purrr)
+
+# Create a list of models
+models <- list(lfw_quad, lfw_lasso,lfw_rf)
+
+# Use map to apply the predict function to each model
+predictions <- models %>%
+  map(~ predict(., newdata = test_df)) %>%
+  set_names(c("quadratic", "lasso", "random_forest")) %>%
+  bind_cols()
+```
+With the next step, we will create a data frame that compares the performance for all models based on unseen information.
+```{r}
+calculate_performance <- function(predicted_values, actual_values) {
+  data.frame(
+    RMSE = caret::RMSE(predicted_values, actual_values),
+    Rsquared = caret::R2(predicted_values, actual_values),
+    MAPE = ie2misc::mape(predicted_values, actual_values)
+  )
+}
+```
+
+```{r}
+performance_df <- map_dfr(names(predictions), ~{
+  calculate_performance(predictions[[.x]], test_df$lfw_g) %>%
+    mutate(names = .x) %>%
+    arrange(desc(RMSE))
+})
+
+```
+
+```{r}
+scatter_test = map(names(predictions),
+                      ~ ggplot(data = predictions,
+                               aes(x = .data[[.x]],
+                                   y = test_df$lfw_g)
+                               ) + 
+              geom_point(color = "black",shape = 21, 
+                         size = 2, fill = "red3",
+                         stroke = 1)+
+              geom_smooth(method = 'lm',
+                          color = "black") +
+              theme_bw()+
+              labs(title = paste(.x, 'predictions'), 
+                   caption=NULL,x="Measured LFW (g)",
+                   y="Predicted LFW (g)")) 
+                      
+scatter_plots <- marrangeGrob(scatter_test,
+                         nrow = 3,
+                         ncol = 1)
+
+scatter_plots
+```
+
+
+
 
 Here is where the coding is going to happen, and it will be completely up to you. Include under this section as many sub-sections (using ##) and as many chunks needed to create the analytical workflow for your analysis, starting at loading packages and data, wrangling, EDA, modeling, assumptions checking, ANOVA table, means, pairwise comparisons, and final publication-quality plot.
 
