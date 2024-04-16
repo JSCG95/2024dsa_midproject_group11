@@ -33,25 +33,23 @@ To get you setup, you will need to:
 
 # Introduction
 
-The convergence of remote sensing and computer vision promises to revolutionize plant research and crop monitoring by providing more efficient and insightful data collection methods. The true potential of these tools lies in the transformation of sensor-derived numerical representation of objects shapes or pixel intensities into meaningful parameters with biological relevance [@fahlgren2015].
+The convergence of remote sensing and computer vision promises to revolutionize plant research and crop monitoring by providing more efficient and insightful data collection methods within controlled environments. The true potential lies in the transformation of sensor-derived numerical representation of objects shapes or pixel intensities into meaningful parameters with biological relevance [@fahlgren2015].
 
-Indoor horticulture benefits from a partial or complete environmental control that provides a consistent productivity. Modern greenhouses rely on the combination of natural and artificial light to avoid losses associated with limited light during winter or cloudy days [@miao2023] . A contrasting responses of different cultivars to external inputs such as light or temperature has been demonstrated [@lee2019], highlighting the need of resource optimization strategies at a cultivar level to excel productivity . Moreover, a more efficient use of resources is required to reduce the high energy use associated with controlled conditions, where light takes a significant proportion of the total energy consumption [@jin2023].
+Indoor horticulture benefits from a partial or complete environmental control that provides a consistent productivity. Destructive approaches limit a continuous evaluation of environmental effects on a highly dynamic plant response such as crop yield [@mochida2019].RGB sensors capturing color information from the red, green and blue bands is a highly versatile, ubiquitous and accessible tool as an image-based solution to add efficiency to the data collection process.
 
-Destructive approaches limit a continuous evaluation of environmental effects on a highly dynamic plant response such as crop yield [@mochida2019]. RGB sensors capturing color information from the red, green and blue bands represent a highly versatile, ubiquitous and accessible tool to grant real-time plant data. An indirect but consistent assessment of plant development response to the environment modulation through an image-based solution generates a more robust criteria for agronmic practices and decision making.
+Lettuce canopy architecture could be described using two-dimensional (2D) top view RGB captures. Besides canopy projected area, additional shape properties provide a more comprehensive description of plant structure [@devylder2012]. In this study, an image analysis workflow was implemented to obtain geometrical features from multiple lettuce canopies simultaneously growing hydroponically. The same image-derived features were implemented as potential predictors for simple linear regress
 
-Canopy responses to increasing light levels has been well documented , ideally cultivars showing an early leaf area expansion thanks to their early response to light result in an increase in light interception generating more fresh weight per unit of incident light. Lettuce canopy architecture could be described using two-dimensional (2D) top view RGB captures. Besides canopy projected area, additional shape properties provide a more comprehensive description of plant structure [@devylder2012]. Tracking changes in canopy morphometric features would help agronomist characterize effects of light on cultivar development across the crop cycle.
-
-In this study, an image analysis workflow was implemented to obtain geometrical features from multiple lettuce canopies simultaneously growing hydroponically. First, the effect of supplemental light on two Romaine lettuce cultivars fresh weight was evaluated to understand the effect of light on fresh biomass at different time points. Additionally, image-derived features were implemented as potential predictors for simple linear regress
+Paragraph 4
 
 # Hypothesis and objectives
 
 HYPOTHESIS:
 
-Fresh weight quantification at multiple time points determines how responsive a lettuce cultivar is to the addition of supplemental light.
+Romaine lettuce cultivar Dragoon has a more responsive cultivar to light treatments
 
 Lettuce fresh weight per plant is accurately estimated using canopy geometric features extracted using an RGB image analysis and machine learning models.
 
--   Evaluate the effect of supplemental light on two lettuce cultivars.
+-   Evaluate the effect of supplemental light on the leaf area of two lettuce cultivars.
 
 -   Extract multiple geometric features for each plant canopy as potential predictors.
 
@@ -59,19 +57,13 @@ Lettuce fresh weight per plant is accurately estimated using canopy geometric fe
 
 # Material and Methods
 
+Describe here your overall material and methods as it pertains to the analysis you will conduct, including study description, site/setup description, what equipment was used, etc. just like you would in a paper. Make sure to clearly explain what was measured and how.
+
 ## Study design
-
-In this study the effects of 2 treatment factors were evaluated. The first treatment factor was cultivar where two Romaine lettuce cultivars were selected based on their susceptibility to tipburn, where Dragoon was the cultivar with high susceptibility while Chicarita the cultivar showing medium susceptibility. The second treatment factor was light where 2 levels either with with (additional LED lights) or without supplemental light (only natural sunlight) were compared.
-
-For our experimental design, light treatments were randomly assigned to six plastic trays distributed across a growing bench. Additionally, 26 seedlings for cultivar A and 26 seedlings for cultivar B were randomly distributed within each plastic tray. Each treatment is represented by the combination of light (Y or N) and cultivar (C or D). 3 replicates per treatment were used to calculate.
-
-**NOTICE:** Distribution of light fixtures across the trays, imaging sensors and growing trays size limited a correct randomization of light treatment across the growing bench. For this project, we are assuming a proper randomization of light across trays and cultivars within trays.
 
 Clearly describe your study design here, including treatment design (which factors and levels, the hierarchy among them, etc.), and your experimental design (number of reps/blocks, how was randomization performed, etc.), as we talked about in class.
 
 ## Statistical analysis
-
-Our response variable (leaf fresh weight) was measured at 3 different time point across the crop cycle: 12, 19 and 26 days after transplant (DAT). A repeated measures ANOVA was implemented to explain the non-randomizable levels of the harvest rounds.
 
 Describe here your statistical analysis, including what type of ANOVA model you ran (based on the design above), what was your response variable, what were your explanatory variables and how were the explanatory variables treated (random or fixed). Provide your alpha level. Explain which function from which package you used to analyze this data. Explain how you checked linear model assumptions and whether or not they were met. Overall, make sure you explain in sufficient detail that, if given your data, a knowledgeable person would be able to reproduce your analysis exactly.
 
@@ -137,7 +129,7 @@ wr_data <-wr_data %>%
 #| fig-height: 8
 wr_data %>%
   ggplot(aes(x = trt_name,
-           y = lfw_g,
+           y = ldw_g,
            fill = light
            )
        ) +
@@ -170,7 +162,7 @@ Means per tray as my replicate for the ANOVA analysis.
 mean_lfw <- wr_data %>%
   group_by(fcultivar,dat,fdat,light,trt_id, trt_name) %>%
   summarise(n = n(),
-            mean = mean(lfw_g))
+            mean = mean(ldw_g))
 ```
 
 ```{r}
@@ -265,7 +257,7 @@ mod_gls_resid <- augment(mod_gls) %>%
 ```
 
 ```{r}
-ggplot(mod_gls_resid, aes(x=.fitted, y=.stdresid))+
+ggplot(mod_default_resid, aes(x=.fitted, y=.stdresid))+
   geom_hline(yintercept = 0, color="red")+
   geom_point(shape = 21,
              fill = "purple", 
@@ -281,7 +273,7 @@ Anova(mod_gls, type = 3)
 ```
 
 ```{r}
-means_extract <- emmeans(mod_gls, 
+means_extract <- emmeans(mod_default, 
                          ~fcultivar:light|fdat) %>%
   cld(reversed = T,
       Letters = letters,
@@ -334,7 +326,7 @@ ggplot(mapping = aes(fill = fcultivar))+
         strip.background = element_rect(fill = "gray", color = "black", size = 1),
     strip.text = element_text(size = 12, face = "bold", color = "white"))
   
-
+ggsave("../outputs/15-04_ldw-time.png",width = 8,height = 10,units = c("in"), dpi = 350)
 ```
 
 ## Response variables and predictors
@@ -344,15 +336,15 @@ To facilitate the analysis down this workflow, the original data set was divided
 ```{r}
 predictors <- wr_data %>% dplyr::select(11:20) 
 
-response <- wr_data %>% dplyr::select(c('lfw_g'))
+response <- wr_data %>% dplyr::select(c('ldw_g'))
 
 matrix <- predictors %>%
-  mutate(lfw_g = response$lfw_g) 
+  mutate(ldw_g = response$ldw_g) 
 
 matrix_resp <- predictors %>%
-  mutate(lfw_g = wr_data$lfw_g,
+  mutate(ldw_g = wr_data$ldw_g,
          ldw_g = wr_data$ldw_g,
-         la_mm2 = wr_data$la_mm2) 
+         ldw_g = wr_data$ldw_g) 
  
 ```
 
@@ -363,7 +355,7 @@ To determine what is the best image parameter that best explains the variability
 ```{r}
 r2_mods <- matrix_resp %>%
   # Pivotting longer for the response variables
-  pivot_longer(cols = lfw_g:la_mm2,
+  pivot_longer(cols = ldw_g:ldw_g,
                names_to = "resp_var",
                values_to = "resp_val"
                ) %>%
@@ -473,7 +465,7 @@ Incident light showed the greatest R^2^ to predict fresh biomass. This variable 
 options(contrasts = c("contr.sum", "contr.poly"))
 
 # Model fitting: Because SR is numerical, will give us a slope. 
-lfw_lin<- lm(lfw_g ~ inc_light,
+lfw_lin<- lm(ldw_g ~ inc_light,
                  data = matrix_resp)
 
 summary(lfw_lin)
@@ -499,7 +491,7 @@ Destructive measurements and remote sensed data were captured at 3 time points a
 options(contrasts = c("contr.sum", "contr.poly"))
 
 # Model fitting: Because SR is numerical, will give us a slope. 
-lfw_quad<- lm(lfw_g ~ inc_light + I(inc_light^2) ,
+lfw_quad<- lm(ldw_g ~ inc_light + I(inc_light^2) ,
                  data = matrix_resp)
 summary(lfw_quad)
 
@@ -514,13 +506,13 @@ ggplot(lfw_quad_aug,
   geom_point(size = 3, alpha = .6)+
   geom_smooth()
 
-ggplot(data = matrix_resp, aes(x = inc_light, y = lfw_g)) +
+ggplot(data = matrix_resp, aes(x = inc_light, y = ldw_g)) +
 geom_point() +
 geom_line(aes(y = fitted(lfw_quad)))
 ```
 
 ```{r}
-lfw_log = nls(lfw_g ~ SSlogis(inc_light, a, b,c), 
+lfw_log = nls(ldw_g ~ SSlogis(inc_light, a, b,c), 
             data = matrix_resp)
 
 summary(lfw_log)
@@ -538,7 +530,7 @@ ggplot(lfw_log_aug,
   geom_point(size = 3, alpha = .7)+
   geom_smooth()
 
-ggplot(data = matrix_resp, aes(x = inc_light, y = lfw_g)) +
+ggplot(data = matrix_resp, aes(x = inc_light, y = ldw_g)) +
 geom_point() +
 geom_line(aes(y = fitted(lfw_log)))
 
@@ -578,7 +570,7 @@ The level of multicollinearity among 7 out of 10 predictors is high. To address 
 Incident light was calculated based on canopy area, therefore adding both features together causes. Based on the R^2^ values and the biological significance of incident light, we will use incident light instead of area_cm2 and diameter, that essentially are giving us the same information.
 
 ```{r}
-full_mlr<- lm(lfw_g ~ ., data  = matrix)
+full_mlr<- lm(ldw_g ~ ., data  = matrix)
 summary(full_mlr)
 
     
@@ -589,7 +581,7 @@ full_mlr %>%
 A full model alternative is summarized in the chunk below where many of the variable coefficients are not significant. Additionally, the VIFs for all the variables included are displayed to show how correlated most of the geometric variables are. Using the correlation matrix plotted in subsection 6.7 and based on the knowledge of what the morphometric variables described about the canopy shape, a reduced group of variables was selected.
 
 ```{r}
-vif_mlr<- lm(lfw_g ~ inc_light + convex_hull + compactness  , data  = matrix) 
+vif_mlr<- lm(ldw_g ~ inc_light + convex_hull + compactness  , data  = matrix) 
 
 summary(vif_mlr)
 
@@ -625,7 +617,7 @@ matrix_alt <- matrix %>%
   dplyr::select(-c(diameter, area_cm2))
 
 # Partition data and create index matrix of selected values
-index <- createDataPartition(matrix_alt$lfw_g, 
+index <- createDataPartition(matrix_alt$ldw_g, 
                              p=.8, 
                              list=FALSE, 
                              times=1)
@@ -659,7 +651,7 @@ set.seed(123)
 
 # Specify lasso regression model to be estimated using training data
 # and k-fold cross-validation process
-lfw_lasso <- train(lfw_g ~., 
+lfw_lasso <- train(ldw_g ~., 
                 data=train_df,
                 preProcess=c("center","scale"),
                 method="glmnet", 
@@ -700,7 +692,7 @@ rf_grid <- expand.grid(.mtry = c(2, 5,10))  # Number of variables to sample as c
 
 set.seed(123) 
 # Fit the random forest model
-lfw_rf <- train(lfw_g ~ .,
+lfw_rf <- train(ldw_g ~ .,
                 data = train_df,
                 method = "rf",
                 trControl = cv_10,
@@ -751,7 +743,7 @@ calculate_performance <- function(predicted_values, actual_values) {
 
 ```{r}
 performance_df <- map_dfr(names(predictions), ~{
-  calculate_performance(predictions[[.x]], test_df$lfw_g) %>%
+  calculate_performance(predictions[[.x]], test_df$ldw_g) %>%
     mutate(names = .x) %>%
     arrange(desc(RMSE))
 })
@@ -762,7 +754,7 @@ performance_df <- map_dfr(names(predictions), ~{
 scatter_test = map(names(predictions),
                       ~ ggplot(data = predictions,
                                aes(x = .data[[.x]],
-                                   y = test_df$lfw_g)
+                                   y = test_df$ldw_g)
                                ) + 
               geom_point(color = "black",shape = 21, 
                          size = 2, fill = "red3",
