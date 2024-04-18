@@ -1,5 +1,5 @@
 ---
-title: "Mid-term project instructions"
+title: "Mid-term project"
 author: "Jonathan S. Cárdenas"
 format:
   html:
@@ -15,69 +15,59 @@ bibliography: references.bib
 
 https://github.com/JSCG95/2024dsa_midproject_group11.git
 
-# Instructions
-
-This file contains both the **instructions** for the mid-term project and placeholders for your code. You are required to use this file to produce code, output, and answers to the questions below.
-
-Besides simply creating output, make sure to interpret the output. You will need to create tables and/or plots to arrive at the answers, and then comment on what you found below it.
-
-To get you setup, you will need to:
-
--   Student #1: create a repository on your GitHub account. You can call this repository "2024dsa_midproject_groupX", **where X is the number of your group**. Make it public, add a README, add a .gitignore for R.\
--   Student #1: follow the steps we did in class to start a new RStudio project with version control.\
--   Student #1: in your computer, create the sub-folders code, data, output, and move your data set into the `data` folder. Also, student 1 moves this current script into the `code` folder. Do a git stage, commit, push.\
--   Student #1: on GitHub, go the repository settings and invite your partner to be a collaborator in the repository. That will give them push permission.\
--   Now, both students should clone this repository on their computers like we did in class. Make sure this step works well and that you can pull and push from GitHub.\
--   Student 2, after cloning, does a git pull to get all these updates on their computer.\
--   Student 1 and 2 work together to update the README file. README files should explain what the repository is about, the goals of that project, who is working in it, and any other important details you may find.
-
 # Introduction
 
-The convergence of remote sensing and computer vision promises to revolutionize plant research and crop monitoring by providing more efficient and insightful data collection methods. The true potential of these tools lies in the transformation of sensor-derived numerical representation of objects shapes or pixel intensities into meaningful parameters with biological relevance [@fahlgren2015].
+The adaptation of remote sensing and computer vision techniques represents a valuable source of data for plant crop monitoring as it offers a more efficient collection of heterogeneous plant data that complements big data coming from environmental sensors . The true potential of imaging tools lies in the transformation of sensor-derived numerical representation of objects shapes or pixel intensities into meaningful parameters with biological relevance [@fahlgren2015].
 
 Indoor horticulture benefits from a partial or complete environmental control that provides a consistent productivity. Modern greenhouses rely on the combination of natural and artificial light to avoid losses associated with limited light during winter or cloudy days [@miao2023] . A contrasting responses of different cultivars to external inputs such as light or temperature has been demonstrated [@lee2019], highlighting the need of resource optimization strategies at a cultivar level to excel productivity . Moreover, a more efficient use of resources is required to reduce the high energy use associated with controlled conditions, where light takes a significant proportion of the total energy consumption [@jin2023].
 
-Destructive approaches limit a continuous evaluation of environmental effects on a highly dynamic plant response such as crop yield [@mochida2019]. RGB sensors capturing color information from the red, green and blue bands represent a highly versatile, ubiquitous and accessible tool to grant real-time plant data. An indirect but consistent assessment of plant development response to the environment modulation through an image-based solution generates a more robust criteria for agronmic practices and decision making.
+Destructive approaches limit a continuous evaluation of environmental effects on a highly dynamic plant response such as crop yield [@mochida2019]. RGB sensors capturing color information from the red, green and blue bands represent a highly versatile, ubiquitous and accessible tool to grant real-time plant data. An indirect but consistent assessment of plant development response to the environment modulation through an image-based solution generates a more robust criteria for agronomic practices and decision making.
 
-Canopy responses to increasing light levels has been well documented , ideally cultivars showing an early leaf area expansion thanks to their early response to light result in an increase in light interception generating more fresh weight per unit of incident light. Lettuce canopy architecture could be described using two-dimensional (2D) top view RGB captures. Besides canopy projected area, additional shape properties provide a more comprehensive description of plant structure [@devylder2012]. Tracking changes in canopy morphometric features would help agronomist characterize effects of light on cultivar development across the crop cycle.
+Canopy responses to additional light levels have the potential to enhance leaf area expansion that results in an increase in light interception. Canopy morphology of different cultivars may be more responsive to an increase in light, generating more fresh weight per unit of incident light [@liu2022]. Lettuce canopy architecture could be described using two-dimensional (2D) top view RGB captures. Besides canopy projected area, additional shape properties provide a more comprehensive description of plant structure [@devylder2012]. Tracking changes in canopy morphometric features would help agronomist characterize effects of light on cultivar development across the crop cycle.
 
-In this study, an image analysis workflow was implemented to obtain geometrical features from multiple lettuce canopies simultaneously growing hydroponically. First, the effect of supplemental light on two Romaine lettuce cultivars fresh weight was evaluated to understand the effect of light on fresh biomass at different time points. Additionally, image-derived features were implemented as potential predictors for simple linear regress
+In this study, the effect of supplemental light on two Romaine lettuce cultivars leaf fresh weight was evaluated to understand the effect of light on fresh biomass at different time points. Aditionally, an image analysis workflow was implemented to obtain geometrical features from multiple lettuce canopies simultaneously growing hydroponically. These image-derived features were implemented as potential predictors used to fit and compare prediction models with different levels of complexity to obtain the most accurate estimation of lettuce fresh weight.
 
 # Hypothesis and objectives
 
-HYPOTHESIS:
+## HYPOTHESIS:
 
-Fresh weight quantification at multiple time points determines how responsive a lettuce cultivar is to the addition of supplemental light.
+Romaine lettuce cultivars fresh weight respond differently to the supplementation of artificial light under greenhouse conditions.
 
 Lettuce fresh weight per plant is accurately estimated using canopy geometric features extracted using an RGB image analysis and machine learning models.
 
--   Evaluate the effect of supplemental light on two lettuce cultivars.
+## OBJECTIVES:
 
--   Extract multiple geometric features for each plant canopy as potential predictors.
+-   Evaluate the effect of supplemental light on the fresh weight of two romaine lettuce cultivars.
 
--   
+-   Extract multiple image features for each plant canopy as potential predictors
+
+-   Fit and compare multiple predictive models to estimate accurately lettuce fresh weight.
 
 # Material and Methods
 
+The experiment was carried out in a greenhouse at the University of Georgia (College of Agriculture and Environmental Sciences, Department of Horticulture, Controlled Environment Agriculture Laboratory), Athens, GA, USA (33.93°N, 83.36°W). After transplant, plants were grown for 26 days from 18 October until 13 November 2023.
+
+A deep water culture hydroponics system was used to grow the plants. Six black trays with 243.8 × 121.9 × 20.3 cm (L × W × H) were distributed along a 15,24-m metallic bench inside the greenhouse. Each tray was filled in with 200 liters of fertilizer solution with a polystyrene foam insulation board (GreenGuard XPS; Kingspan Insulation, Atlanta, GA, USA) floating on top of the solution. Additionally, 55 holes with 2.54 cm diameter each were drilled and equally distributed at 18 cm from center to center of each hole giving a plant density of 25 plants/m2 along the foam board forming a 11×5 grid pattern. Inside each hole, individual rockwool plugs with a single seedling were placed into a 4.45 cm top diameter × 3.18 cm bottom diameter × 4.76 cm deep net cup (Orimerc Garden, Seattle, WA). An ePAR quantum sensor (SQ-610 ePAR; Apogee Instruments, Logan, UT, USA) was in the center of each tray’s insulation board measuring PPFD. All sensors were connected to a datalogger (CR1000X; Campbell Scientific, Logan, UT, USA) used to automatically calculate the daily light integral (DLI) attained for each tray with and without supplemental along the crop cycle.
+
+To obtain ground truth measurements per plant, conventional destructive methods of shoot biomass were used to quantify leaf fresh weight (LFW), leaf dry weight (LDW) and leaf area (LA). For LDW, plant shoots were dried in a drying oven for 72 hours at 80 ℃. LA was measured using a leaf area meter (LI-3100; LI-COR, Lincoln, NE, USA) after detaching every leaf. In total, 3 harvests were performed along a 26-day lettuce crop cycle. First, second and third harvest round were performed at 12, 19 and 26 days after transplant, respectively.
+
+For image capture a Linux-based embedded microcomputer (Raspberry Pi 4 model B, Raspberry Pi Foundation, Cambridge, UK) and a 12 Megapixel 120° Wide-Angle RGB camera (Raspberry Pi Camera Module v3; Raspberry Pi Foundation, Cambridge, UK) were used. An embedded computer with its corresponding RGB camera was installed on top of each growing tray. The camera lens was located pointing down towards the center of each tray such that top-view images effectively captured all 54 plant canopies located across the tray dimensions. To ensure that cameras field of view (FOV) effectively cover the tray completely, the camera’s working distance (WD), that is the ideal height at which the camera was mounted to cover the whole tray. After running our image processing workflow for all raw captures, the output was a data set containing in total 9 features describing the canopy’s geometry for each plant was created and stored as a .csv file for data processing. As an additional feature per plant, the canopy area obtained per plant and the daily light integral calculations per growing tray (registered by the ePAR sensors and datalogger) were used to calculate a daily incident light value. This feature calculates the amount of light each lettuce head accumulated until a specific point in time.
+
 ## Study design
 
-In this study the effects of 2 treatment factors were evaluated. The first treatment factor was cultivar where two Romaine lettuce cultivars were selected based on their susceptibility to tipburn, where Dragoon was the cultivar with high susceptibility while Chicarita the cultivar showing medium susceptibility. The second treatment factor was light where 2 levels either with with (additional LED lights) or without supplemental light (only natural sunlight) were compared.
+To determine how a specific cultivar responds to supplemental light, the effects of 2 treatment factors were evaluated. The first treatment factor was cultivar where two Romaine lettuce cultivars were selected based on their susceptibility to tip burn, where 'Dragoon' was the cultivar with high susceptibility while 'Chicarita' the cultivar showing medium susceptibility. The second treatment factor was light where 2 levels either with with (additional LED lights) or without supplemental light (only natural sunlight) were compared.
 
-For our experimental design, light treatments were randomly assigned to six plastic trays distributed across a growing bench. Additionally, 26 seedlings for cultivar A and 26 seedlings for cultivar B were randomly distributed within each plastic tray. Each treatment is represented by the combination of light (Y or N) and cultivar (C or D). 3 replicates per treatment were used to calculate.
+The experiment was a complete randomized design (CRD), where light treatments were randomly assigned to six plastic trays distributed across a growing bench. Additionally, 26 seedlings for cultivar A and 26 seedlings for cultivar B were randomly distributed within each plastic tray. Each treatment is represented by the combination of light (Y or N) and cultivar (C or D). 3 replicates per treatment were used to calculate means. Leaf fresh weight was measured per plant, and each treatment replicate was calculated as an average of n sampling plants (observational units).
 
-**NOTICE:** Distribution of light fixtures across the trays, imaging sensors and growing trays size limited a correct randomization of light treatment across the growing bench. For this project, we are assuming a proper randomization of light across trays and cultivars within trays.
+**NOTICE:** Distribution of light fixtures across the trays, imaging sensors and growing trays size limited a proper randomization of light treatment across the growing bench. For this project, we are assuming a proper randomization of light across trays and cultivars within trays.
 
-Clearly describe your study design here, including treatment design (which factors and levels, the hierarchy among them, etc.), and your experimental design (number of reps/blocks, how was randomization performed, etc.), as we talked about in class.
+![Diagram representing the distribution of the experimental factors across the growing bench.](images/17-04_midterm-experimental.png){fig-align="center"}
 
 ## Statistical analysis
 
-Our response variable (leaf fresh weight) was measured at 3 different time point across the crop cycle: 12, 19 and 26 days after transplant (DAT). A repeated measures ANOVA was implemented to explain the non-randomizable levels of the harvest rounds.
-
-Describe here your statistical analysis, including what type of ANOVA model you ran (based on the design above), what was your response variable, what were your explanatory variables and how were the explanatory variables treated (random or fixed). Provide your alpha level. Explain which function from which package you used to analyze this data. Explain how you checked linear model assumptions and whether or not they were met. Overall, make sure you explain in sufficient detail that, if given your data, a knowledgeable person would be able to reproduce your analysis exactly.
+Our response variable (leaf fresh weight) was measured at 3 different time points across the crop cycle: 12, 19 and 26 days after transplant (DAT). Cultivar, light treatment and DAT factors were treated as fixed-effects. A generalized least squared (GLS) model with the appropriate serial correlation structure was used to account for the lack of independence assumption of the non-randomizable harvest time levels in the model. Models were fitted and compared in R software, using packages nlme and lme4. Before using the chosen model for inference, linear assumptions on the model's residuals were evaluated graphically using the model's fitted vs residual plot and a Quantile-Quantile plot. A type III analysis of variance (ANOVA) was performed using the specified GLS model, and the mean comparisons were conducted using Tukey's Honestly Significant Difference (HSD) test at a significance level of 5%.
 
 # Results
-
-## Exploratory Data Analysis (EDA)
 
 ```{r setup}
 #| message: false
@@ -97,7 +87,10 @@ library(ggridges)
 library(ggcorrplot)
 library(nlraa)
 library(caret)
+library(gridExtra)
 ```
+
+## EDA and Data Wrangling
 
 Loading data tables including remote sensed data, treatment factor columns, response variables (leaf fresh weight, leaf dry weight and leaf area), harvest dates.
 
@@ -126,19 +119,27 @@ wr_data <-wr_data %>%
          fcultivar = factor(cultivar)
          ) %>%
   mutate(trt_id = as.factor(paste0(cultivar, '+',light,'+',tray_id)),
-         trt_name = as.factor(paste0(cultivar, '+',light))) %>%
+         trt_name = as.factor(paste0(cultivar, '+',light)),
+         rep = case_when((trt_id %in% c('C+Y+1','D+Y+1','C+N+4','D+N+4' )) ~ '1',
+                             (trt_id %in% c('C+Y+2','D+Y+2','C+N+5','D+N+5' )) ~ '2',
+                             (trt_id %in% c('C+Y+3','D+Y+3','C+N+6','D+N+6' )) ~ '3'
+         )) %>%
   dplyr::select(-c(melatonin))
 ```
 
-## Boxplots: Response Variables distribution.
+## Box plots: Response Variables distribution.
+
+Treatments distributions plotted based on observational units (raw data).
 
 ```{r}
 #| fig-width: 12
 #| fig-height: 8
+#| message: false
+#| warning: false
 wr_data %>%
   ggplot(aes(x = trt_name,
            y = lfw_g,
-           fill = light
+           fill = cultivar
            )
        ) +
   geom_boxplot(width = 0.4)+
@@ -160,29 +161,37 @@ wr_data %>%
   labs(title=NULL,
        subtitle = NULL,
        caption=NULL,
-       x=NULL,
+       x="Treatment",
        y="Leaf Fresh Weight (g)")
 ```
 
-Means per tray as my replicate for the ANOVA analysis.
+To fit our statistical model, means for each treatment replicates are necessary. From the raw data, we are extracting averages for each treatment replicates (3 per treatment). Data is grouped by DAT to generate averages for each harvest round.
 
 ```{r}
+#| message: false
+#| warning: false
 mean_lfw <- wr_data %>%
-  group_by(fcultivar,dat,fdat,light,trt_id, trt_name) %>%
+  group_by(fcultivar,dat,fdat,light,trt_id, trt_name,rep) %>%
   summarise(n = n(),
-            mean = mean(lfw_g))
+            mean = mean(lfw_g),
+            sd = sd(lfw_g)) %>%
+  mutate(rep = as.factor(rep))
+  
 ```
 
 ```{r}
+#| fig-width: 10
+#| fig-height: 8
 mean_lfw %>%
   ggplot(aes(x = trt_name,
            y = mean,
            fill = light
            )
        ) +
-  geom_boxplot(width = 0.4)+
+  geom_boxplot(width = 0.3)+
   geom_jitter(alpha = 0.5,
-              width = 0.3) +
+              width = 0.3,
+              size = 3) +
   theme_bw()+
   facet_grid(dat~.,
              scales = 'free') +
@@ -203,72 +212,88 @@ mean_lfw %>%
        y="Leaf Fresh Weight (g)")
 ```
 
-## 2-WAY ANOVA
+## Choosing the right GLS model
+
+The following lines of code fit generalized least square (GLS) model with 3 different correlation structures. This model account for the lack of independence of the time variable, since the response variable leaf fresh weight was measured at 3 different time points. Within the correlation matrix function, the form argument defines the correct time lag (dat in this scenario) specifying the tray-treatment id where the measurements are coming from (i.e., the effects of time that varies across the different replicates of each treatment).
 
 ```{r}
-mod_default <- lme(
+options(contrasts = c("contr.sum", "contr.poly"))
+
+mod_cs <- gls(
   mean ~ light*fcultivar*fdat,
-  random = ~ fdat|trt_id,
+  correlation = corCompSymm(form = ~dat|trt_id),
   data = mean_lfw)
 
 
-mod_arma2 <- lme(
+mod_arma <- gls(
   mean ~ light*fcultivar*fdat,
-  random = ~ fdat|trt_id,
-  correlation = corARMA(p = 1, q = 1),
+  correlation = corARMA(form = ~dat|trt_id,p = 1, q = 1),
   data = mean_lfw)
 
 
-mod_AR1 <- lme(
+mod_car1 <- gls(
   mean ~ light*fcultivar*fdat,
-  random = ~fdat|trt_id,
   correlation = corCAR1(form = ~dat|trt_id),
   data = mean_lfw)
 
-
-mod_gls <- gls(mean ~ light*fcultivar*fdat,
-  correlation = corCAR1(form = ~dat|trt_id),
-  data = mean_lfw)
 ```
 
-```{r}
-Anova(mod_gls, type = 3)
-```
+Is important to highlight here that the harvest were performed at non-equally-spaced time measurements. Notice that nlme package suggest that the autocorrelation function is useful to investigate models for equally spaced data, however in our case the function serves as a useful reference to know if the model specified the right number of lags.
 
 ```{r}
-ACF(mod_default, resType = "n") %>%
+ACF(mod_cs,
+    form = ~dat|trt_id,
+    resType = "n") %>%
   plot(alpha = 0.01)
 
-ACF(mod_AR1, resType = "n") %>%
+ACF(mod_arma, resType = "n",
+    form = ~dat|trt_id) %>%
   plot(alpha = 0.01)
 
-ACF(mod_gls, resType = "n") %>%
+ACF(mod_car1, resType = "n",
+    form = ~dat|trt_id) %>%
   plot(alpha = 0.01)
 ```
 
+Based on the model metrics presented in the table below, the model that uses the autoregressive-moving average AR1 yields the best model as it displays the smallest BIC and AIC values. However, there is not a substantial difference between compound symmetry model and AR1 model. AR1 model is a more effective correlation structure to deal with non-equally spaced time lags, which agrees with the results of the metrics comparison.
+
 ```{r}
-anova(mod_default,mod_arma2,mod_AR1, mod_gls)
+anova(mod_cs,
+      mod_arma,
+      mod_car1)
 ```
 
 ## ANOVA assumptions
 
+BIC and AIC agreed that AR1 was the best model fit for the data. The following plots check if the model assumptions are met. GLS model is not taking into account random effects, therefore only the within groups residuals are considered.
+
 ```{r}
 library(broom.mixed)
-mod_default_resid <- augment(mod_default) %>%
-  mutate(.stdresid=resid(mod_default, type="pearson", scaled=T))
+mod_arma_resid <- augment(mod_arma) %>%
+  mutate(.stdresid=resid(mod_arma, type="pearson", scaled=T))
 
-mod_default_resid <- augment(mod_default) %>%
-  mutate(.stdresid=resid(mod_default, type="pearson", scaled=T))
+mod_cs_resid <- augment(mod_cs) %>%
+  mutate(.stdresid=resid(mod_cs, type="pearson", scaled=T))
 
-mod_gls_resid <- augment(mod_gls) %>%
-  mutate(.stdresid=resid(mod_gls, type="pearson", scaled=T))
+mod_car1_resid <- augment(mod_car1) %>%
+  mutate(.stdresid=resid(mod_car1, type="pearson", scaled=T))
 ```
 
+Based on the plot presented above:
+
+-   Residuals check the assumption of **independence**, since no particular pattern is evident in the fitted vs residual plot.
+
+-   Residuals are slightly increasing across x-axis and showing a fan shape at the right end of the plot. The model might face a problem with the variance homogeneity. Is not so evident so we assume **homoscedasticity** is met.
+
+-   Most of the residuals seem to be within the allowance interval. **Outliers** assumption is cleared.
+
 ```{r}
-ggplot(mod_gls_resid, aes(x=.fitted, y=.stdresid))+
+#| message: false
+#| warning: false
+ggplot(mod_car1_resid, aes(x=.fitted, y=.stdresid))+
   geom_hline(yintercept = 0, color="red")+
   geom_point(shape = 21,
-             fill = "purple", 
+             fill = "green3", 
              size = 3,
              alpha = .7)+
   geom_smooth()+
@@ -276,13 +301,34 @@ ggplot(mod_gls_resid, aes(x=.fitted, y=.stdresid))+
   theme_bw()
 ```
 
-```{r}
-Anova(mod_gls, type = 3)
-```
+The QQ-plot shown below assess the assumption of normality for the AR1(car1) model. Residuals on both tails are skewed, although residuals in the center seem to follow the theoretical normal distribution. The **normality** assumption is met.
 
 ```{r}
-means_extract <- emmeans(mod_gls, 
-                         ~fcultivar:light|fdat) %>%
+ggplot(mod_car1_resid, aes(sample=.stdresid))+
+  stat_qq(  shape = 21,
+            fill = "green3", 
+            size = 3,
+            alpha = .7
+  )+
+  stat_qq_line()+
+  labs(x = "Theoretical quantile",
+       y = "Sample quantile")+
+  theme_bw()
+```
+
+Model AR1 met all assumptions for the ANOVA, for this reason it will used for inference to extract the model means. The ANOVA shows a significant interaction between light and DAT, cultivar and DAT, but the interaction between light and cultivar is not significant. Checking at each treatment factor independently there is a significant effect of light and cultivar.
+
+```{r}
+Anova(mod_car1, type = 3)
+```
+
+## Extracting means and pairwise comparison
+
+The hypothesis we are testing is if one of the 2 romaine lettuce cultivar responds more effectively to the effect of supplemental light under greenhouse conditions. Even though the interaction was not significant, a comparison among treatment (cultivar + light) addresses more effectively this hypothesis. The mean extraction show below considers the interaction between effect of light and cultivar for each harvest date.
+
+```{r}
+means_extract <- emmeans(mod_car1, 
+                         ~light:fcultivar|fdat) %>%
   cld(reversed = T,
       Letters = letters,
       adjust = "none"
@@ -294,7 +340,9 @@ means_extract <- emmeans(mod_gls,
 means_extract
 ```
 
-## Emmeans graph
+## Pairwise comparison plot
+
+We are interested in looking at the comparison of each cultivar fresh weight accumulation across time grown with or without supplemental light. For this, the means were extracted specifying the interaction between the effect of light and cultivar to highlight the different between treatments. The plot displayed below shows the letter separation for the different treatments in a specific harvest day.
 
 ```{r}
 #| fig-width: 6
@@ -337,9 +385,13 @@ ggplot(mapping = aes(fill = fcultivar))+
 
 ```
 
-## Response variables and predictors
+The plot above summarized the effect of cultivar and light on lettuce fresh weight across time. On the first harvest date both cultivars regardless of the light conditions where split in two different groups, suggesting that at this time point the observed differences among treatments are explained mainly by cultivar factor. In a second harvest date, the effect of light in the least responsive cultivar 'Chicarita' is more evident as it was grouped together with cultivar 'Dragoon' grown without light. On last harvest date, all treatments are assigned to different groups with 'Dragoon' cultivar growing under supplemental showing the highest fresh weight followed by 'Chicharita' cultivar growing under supplemental light too, suggesting that the effect of light is fundamental to explain the difference in fresh weight at this point in time.
+
+## Leaf fresh weight Estimation
 
 To facilitate the analysis down this workflow, the original data set was divided into multiple data frames that contains all imaging features that will be used as potential predictors. Additionally, a data frame was created with all the response variables and predictors combined to implement an iterative step.
+
+Feature engineering was used in a different script (20-02_features-eng.R) to combine data coming from different sensors in a single variable that has more biological significance for canopy development. Incident light considers the light intercepted by a defined area of plant canopy, variables coming from the light and RGB sensor, respectively.
 
 ```{r}
 predictors <- wr_data %>% dplyr::select(11:20) 
@@ -356,7 +408,7 @@ matrix_resp <- predictors %>%
  
 ```
 
-## Baseline model: Best Predictor
+## Model 1: Baseline model
 
 To determine what is the best image parameter that best explains the variability of the response, the coefficient of determination - R^2^ was extracted from all possible linear regressions between 3 responses & 10 potential predictors. The image parameter showing the greatest value was used as the predictor for the baseline simple linear regression.
 
@@ -408,6 +460,8 @@ A data frame with the top 3 features per variable created above was used to gene
 ```{r}
 #| fig-width: 15
 #| fig-height: 10
+#| message: false
+#| warning: false
 
 lm_plots <- top_r2 %>%
   mutate(splot = map2(data,r2,
@@ -446,7 +500,7 @@ lm_plots <- top_r2 %>%
                              y = .rv
                              )))
 
-library(gridExtra)
+
 
 linear_plots <- marrangeGrob(lm_plots$splot_better,
                          nrow = 3,
@@ -455,21 +509,25 @@ linear_plots <- marrangeGrob(lm_plots$splot_better,
 linear_plots
 ```
 
-The following table summarizes the coefficient of determination (R^2^) values chosen for each response variable.
+The following table summarizes the coefficient of determination (R^2^) values chosen for each response variable. In the following steps, only leaf fresh weight will be considered as the response variable.
 
-|     |        Leaf fresh weight         |          Leaf dry weight          |         Leaf area         |
-|------------------|:----------------:|:----------------:|:----------------:|
-| 1   | **incident light (R^2^= 0.784)** |      diameter (R^2^= 0.806 )      |  diameter (R^2^= 0.847 )  |
-| 2   |      diameter (R^2^= 0.775)      | **incident light (R^2^= 0.801 )** |  area_cm2 (R^2^= 0.828 )  |
-| 3   |      area_cm2 (R^2^= 0.770)      |      area_cm2 (R^2^= 0.793 )      | axis_minor (R^2^= 0.782 ) |
+|     |        Leaf fresh weight         |          Leaf dry weight          |          Leaf area          |
+|---------------|:------------------:|:-------------------:|:---------------:|
+| 1   | **incident light (R^2^= 0.784)** |      diameter (R^2^= 0.806 )      | **diameter (R^2^= 0.847 )** |
+| 2   |      diameter (R^2^= 0.775)      | **incident light (R^2^= 0.801 )** |   area_cm2 (R^2^= 0.828 )   |
+| 3   |      area_cm2 (R^2^= 0.770)      |      area_cm2 (R^2^= 0.793 )      |  axis_minor (R^2^= 0.782 )  |
 
 : Top 3 predictors with the largest coefficient of determination values for the 3 responses variables
 
-## Assumptions for the best predictor
+### Assumptions for the best predictor
 
 Incident light showed the greatest R^2^ to predict fresh biomass. This variable combines canopy area information with the amount of light received until a specific time point measured using a light sensor (cumulative DLI).
 
+The summary of a simple linear regression using incident light as the only predictor variable for fresh estimation is presented below. Additionally, a fitted vs residuals plot is displayed to show if the predictor is in fact linearly correlated with the response or if there is a consistent variability of the residuals across the range of predicted values. We expect fitting a model that has a similar error across the range of predicted values.
+
 ```{r}
+#| message: false
+#| warning: false
 options(contrasts = c("contr.sum", "contr.poly"))
 
 # Model fitting: Because SR is numerical, will give us a slope. 
@@ -491,11 +549,15 @@ ggplot(lfw_lin_aug,
 
 ```
 
-## Linear or non - linear?
+Based on the plot shown above, there seem to be a noticeable pattern across the range of fitted values. The linear relationship between the only predictor and the response seems to be ignoring a non-linear pattern at the end of the x-axis as we as a noticeable change right in the middle. Therefore, is necessary to look for the addition of terms that better captures that particular pattern in the residuals.
 
-Destructive measurements and remote sensed data were captured at 3 time points along the crop cycle. As the objective is to fit a single model that predicts biomass on any given day, the right linear or non-linear fit between the best predictor must be found.
+### Improving model fit
+
+Destructive measurements and remote sensed data were captured at 3 time points along the crop cycle. As the objective is to fit a single model that predicts fresh biomass on any given day, the right linear or non-linear fit between the best predictor must be found. The first option was to fit a quadratic model, adding a quadratic term of the predictor incident light.
 
 ```{r}
+#| message: false
+#| warning: false
 options(contrasts = c("contr.sum", "contr.poly"))
 
 # Model fitting: Because SR is numerical, will give us a slope. 
@@ -518,6 +580,10 @@ ggplot(data = matrix_resp, aes(x = inc_light, y = lfw_g)) +
 geom_point() +
 geom_line(aes(y = fitted(lfw_quad)))
 ```
+
+As shown by the R^2^ value in the quadratic model summary, adding a quadratic term improved the variability captured by the model. Moreover, the fitted vs residual plot calculate based on quadratic model, shows a better capacity to capture the trends on the residuals especially on the largest fitted values.
+
+Additionally, a non- linear logistic regression is implemented using the R package nls. To automatically set the values for the equation terms, the function SSlogic() was implemented.
 
 ```{r}
 lfw_log = nls(lfw_g ~ SSlogis(inc_light, a, b,c), 
@@ -542,9 +608,10 @@ ggplot(data = matrix_resp, aes(x = inc_light, y = lfw_g)) +
 geom_point() +
 geom_line(aes(y = fitted(lfw_log)))
 
+
 ```
 
-Based on each model assumptions, a baseline model that fits
+The logistic regression did not captured precisely the pattern of the fitted values around 200, however this model shows a lower residual standard error than the quadratic model. For this reason, the logistic model that uses incident light as the only predictor variable is set as the baseline.
 
 ## Correlations among predictors
 
@@ -571,9 +638,9 @@ ggcorrplot(corr_percent, hc.order = TRUE,
 
 The level of multicollinearity among 7 out of 10 predictors is high. To address this problem, a multiple linear regression fitted based on the variables that show the lowest variance inflation factor (VIF) when using simultaneously in a model will be used. Additionally, LASSO regression will be implemented as an alternative option, as this model penalizes predictors that do not contribute significantly.
 
-## Modelling
+## Model 2: Multiple Linear Regression
 
-### Multiple Linear Regression
+In this section, a multiple linear regression model with a reduced set of predictors was fitted. The variable selection was based on two criteria: VIF and biological/geometrical criteria to choose the variables that are more representative to describe canopy shape.
 
 Incident light was calculated based on canopy area, therefore adding both features together causes. Based on the R^2^ values and the biological significance of incident light, we will use incident light instead of area_cm2 and diameter, that essentially are giving us the same information.
 
@@ -612,11 +679,11 @@ vif_mlr %>%
 
 By keeping the least correlated predictors and selecting the variables that portrait heterogeneous information of that canopy shape, we obtained a MLR model with variables with highly significant coefficients.Additionally, the VIFs for the 3 variables selected are below 5.
 
-## Predictions: Training and Testing.
+## Machine Learning Models
 
 ### Data partition: Test-train split available
 
-Until this point we found that to predict LFW, a quadratic model of incident light seems to be the best baseline model to be used for prediction as shown by it's high capacity for capturing variability in the response, a better description of the residuals variability as shown by the assumptions plot.
+Until this point we found that to predict LFW, a quadratic model of incident light seems to be the best baseline model to be used for prediction as shown by it's high capacity for capturing variability in the response and a better description of the residuals variability as shown by the fitted vs residuals plot .
 
 Here, I'm dropping the variables area_cm2 and diameter as I know ahead that incident light is capturing the same information being captured by these 2. As we will start using a machine learning approach to find the model that yields the most accurate prediction, our full dataset will be split in a training and a testing data set. Plant observation on the training set will be used to find the values of the hypertuning parameters for the models that require a hyperparameter specification (in our case: LASSO and random forest).
 
@@ -642,12 +709,12 @@ Before training we need a resampling scheme. Here we are using a 10-fold cross v
 
 ```{r}
 # Specify 10-fold cross-validation as training method
-cv_10 <- trainControl(method="cv", 
-                          number=10,
+cv_5 <- trainControl(method="cv", 
+                          number=5,
                           savePredictions="all")
 ```
 
-LASSO implements a penalty (lambda value) that is a threhold to reject variables with insignificant contribution to the model predictions. The following vector creates 500 different possible values for lambda. We want to find the valye of lambda that gives the minimum MSE.
+LASSO implements a penalty (lambda value) that is a threshhold to reject variables with insignificant contribution to the model predictions. The following vector creates 500 different possible values for lambda. We want to find the value of lambda that gives the minimum MSE.
 
 ```{r}
 lambda_vector <- 10^seq(2, -5, length=500)
@@ -664,11 +731,11 @@ lfw_lasso <- train(lfw_g ~.,
                 preProcess=c("center","scale"),
                 method="glmnet", 
                 tuneGrid=expand.grid(alpha=1, lambda=lambda_vector),
-                trControl=cv_10,
+                trControl=cv_5,
                 na.action=na.omit)
 ```
 
-Showing the average performance for 2 performance metrics (R^2^ and RMSE).
+Showing the average performance for 2 performance metrics (R^2^ and RMSE) after fitting the model with the hyper parameter selected in a previous step. Here, an average of the performance metrics calculated using the observations coming from the assesment fold (set of observations saved for performance estimation)
 
 ```{r}
 lamb_best<- lfw_lasso$bestTune$lambda
@@ -685,17 +752,23 @@ perf_lambda <- data.frame(lfw_lasso$results$Rsquared,
 
 ```
 
+The table below shows the coefficient for the variables that were selected after fitiing a model using the best lambda penalty selected using cross-validation.
+
 ```{r}
 coef(lfw_lasso$finalModel, lfw_lasso$bestTune$lambda)
 ```
+
+Additionally, varImp function displays the variables in descending order from the variable that had more importance for leaf fresh weight predictions to the variables that did not influence or that were rejected by the lambda penalty.
 
 ```{r}
 varImp(lfw_lasso)
 ```
 
-### Random Forest
+### Model 4: Random Forest
 
 ```{r}
+#| message: false
+#| warning: false
 rf_grid <- expand.grid(.mtry = c(2, 5,10))  # Number of variables to sample as candidates at each split
 
 set.seed(123) 
@@ -703,10 +776,12 @@ set.seed(123)
 lfw_rf <- train(lfw_g ~ .,
                 data = train_df,
                 method = "rf",
-                trControl = cv_10,
+                trControl = cv_5,
                 tuneGrid = rf_grid,
                 na.action = na.omit)
 ```
+
+After training the random forest model to find the best hyperparameter mtry, a summary table is provided that shows what is the change in root mean squared error depending on which mtry is used.
 
 ```{r}
 perf_rf <- data.frame(lfw_rf$results$Rsquared, 
@@ -721,23 +796,23 @@ perf_rf
 
 ## Predictions performance using test set
 
-Until this point we generated 3 predicting models: Baseline with incident_light quadratic, lasso regression and random forest regression. To run prediction with each model simultaneously I will iterate through the model's names.
+Until this point we generated 3 predicting models: Baseline with incident_light quadratic, lasso regression and random forest regression. To run prediction with each model simultaneously I will iterate through each model to generate a predictions data frame that organizes each model prediction in a single column.
 
 ```{r}
 # Load the necessary library
 library(purrr)
 
 # Create a list of models
-models <- list(lfw_quad, lfw_lasso,lfw_rf)
+models <- list(lfw_log,vif_mlr, lfw_lasso,lfw_rf)
 
 # Use map to apply the predict function to each model
 predictions <- models %>%
   map(~ predict(., newdata = test_df)) %>%
-  set_names(c("quadratic", "lasso", "random_forest")) %>%
+  set_names(c("Logistic","MLR VIF", "LASSO", "Random Forest")) %>%
   bind_cols()
 ```
 
-With the next step, we will create a data frame that compares the performance for all models based on unseen information.
+In the following table , a summary of 3 performance metrics for all models is presented based, calculated using unseen observations coming from the testing data set.
 
 ```{r}
 calculate_performance <- function(predicted_values, actual_values) {
@@ -750,76 +825,56 @@ calculate_performance <- function(predicted_values, actual_values) {
 ```
 
 ```{r}
+#| message: false
+#| warning: false
 performance_df <- map_dfr(names(predictions), ~{
   calculate_performance(predictions[[.x]], test_df$lfw_g) %>%
     mutate(names = .x) %>%
     arrange(desc(RMSE))
 })
 
+performance_df
 ```
 
+Based on the performance table, Random Forest outperforms multiple linear regression, LASSO and the baseline model by capturing a higher proportion of the variability in leaf fresh weight, with the highest R^2^ and the lowest error among the 3 models with a mean average percentage error of \~25%, that is a \~50% reduction of error compare with the baseline model.
+
 ```{r}
+#| fig-width: 12
+#| fig-height: 18
+#| message: false
+#| warning: false
+
 scatter_test = map(names(predictions),
                       ~ ggplot(data = predictions,
                                aes(x = .data[[.x]],
                                    y = test_df$lfw_g)
                                ) + 
               geom_point(color = "black",shape = 21, 
-                         size = 2, fill = "red3",
-                         stroke = 1)+
+                         size = 2.3, fill = "red3",
+                         stroke = 1,
+                         alpha = 0.5)+
               geom_smooth(method = 'lm',
                           color = "black") +
               theme_bw()+
               labs(title = paste(.x, 'predictions'), 
                    caption=NULL,x="Measured LFW (g)",
-                   y="Predicted LFW (g)")) 
+                   y="Predicted LFW (g)") +
+                theme(plot.subtitle = element_text(size=14, face="bold"),
+                   axis.text.x = element_text(size=12),
+                   axis.text.y = element_text(size=12),
+                   axis.title.x = element_text(size=14,face="bold"),
+                   axis.title.y = element_text(size=14,face="bold"),
+                   axis.title = element_text(size = 14, face="bold"),
+                   legend.position = "top",
+        panel.spacing = unit(.5, "lines"),
+        panel.border = element_rect(color = "black", fill = NA, size = 1),
+        strip.background = element_rect(fill = "gray", color = "black", size = 1),
+    strip.text = element_text(size = 12, face = "bold", color = "white"))) 
                       
 scatter_plots <- marrangeGrob(scatter_test,
-                         nrow = 3,
+                         nrow = 4,
                          ncol = 1)
-
 scatter_plots
 ```
 
-Here is where the coding is going to happen, and it will be completely up to you. Include under this section as many sub-sections (using ##) and as many chunks needed to create the analytical workflow for your analysis, starting at loading packages and data, wrangling, EDA, modeling, assumptions checking, ANOVA table, means, pairwise comparisons, and final publication-quality plot.
-
-Make sure to run a model that reflects your study design. Even if your study design does not include one of the designs covered in class, you are still expected to run the most appropriate model. If you need help for references, let me know.
-
-Before each chunk, describe the steps being performed in that chunk. For example, "Here I will load the data".
-
-If a chunk produces output, like printing a data frame, statistical summary, a plot, ANOVA table, etc., make sure to write text interpreting what you see and how you can/will use that information to move forward to the next steps in the workflow.
-
-# Team work in GitHub
-
-Whether you are working with your future-self or as duos, make sure to stage, commit, and push after finishing each of the sub-sections above. When committing, write commit messages that are short and descriptive (e.g., finished wrangling).
-
-If you are working in duos, make sure to split the workload. I will check your collaborative work through the commit history, and if one student has contributed significantly more than the other, than that will impact grades.
-
-**Tip 1**: to avoid merge conflicts, make sure to **pull** first, and then start working locally. That will ensure that any changes made by your partner will be "downloaded" before you make changes to the files locally.
-
-**Tip 2**: make use of the Issues on this repository to set up to-do lists and assign tasks to different people. You can also use each issue/task to discuss how things should be run and get to an agreement.
-
-# Submitting your work
-
-Once you have developed all the code and answers, make sure to Render this quarto file.
-
-**Notes on rendering**:
-
--   Make sure to render your work and inspect how the final html look like.\
--   If it does not look professional for whatever reason, then fix the issue, re-render it, recheck.\
--   Only send me your work once your html file looks professional.\
--   Some potential issues you may encounter and how to fix them:
-    -   Some times your code may be creating a table output that is waaay to long and cumbersome to scroll through when rendered. If this is the case, make it more professional looking by using the `head()` function to only print the first handful of rows (instead of thousands of rows).
-
-    -   **DO NOT** delete the file's heading levels (# and ##). They set up the proper heading 1 and 2 levels, and I use them to guide my grading.
-
-    -   If a given chunk is also outputting warnings or messages, inhibit this behavior by changing the chunk options `message` and `warning` to `FALSE`.
-
-    -   If, after rendered, 2 lines of text are connected and you wish to "break line" between them, add 2 extra spaces after the first one.
-
-After rendering, an .html file will be created on your `code` folder.
-
-Rename this file to `LASTNAME1-LASTNAME2_midtermproject.html`.\
-For ex., `Bastos-Mendes_midtermproject.html`.
-
-Send the html file to my email (lmbastos\@uga.edu) by **April 11th** 11:59 pm.
+# References
